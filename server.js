@@ -1,6 +1,9 @@
 // required npm(s).
 const express = require("express");
 
+const fs = require("fs");
+const path = require("path");
+
 // json file to be used (require).
 const { animals } = require("./data/animals.json");
 
@@ -9,6 +12,11 @@ const PORT = process.env.PORT || 3001;
 
 // instantiate the server.
 const app = express();
+
+// parse incoming string or array data.
+app.use(express.urlencoded({ extended: true }));
+// parse incoming JSON data.
+app.use(express.json());
 
 function filterByQuery(query, animalsArray) {
   let personalityTraitsArray = [];
@@ -52,6 +60,16 @@ function findById(id, animalsArray) {
   return result;
 }
 
+function createNewAnimal(body, animalsArray) {
+  console.log(body);
+  // our function's main code will go here!
+  const animal = body;
+  animalsArray.push(animal);
+  // return finished code to post route for response.
+  fs.writeFileSync(path.join(__dirname, "./data/animals.json"), JSON.stringify({ animals: animalsArray }, null, 2));
+  return animal;
+}
+
 app.get("/api/animals", (req, res) => {
   let results = animals;
   if (req.query) {
@@ -67,6 +85,15 @@ app.get("/api/animals/:id", (req, res) => {
   } else {
     res.sendStatus(404);
   }
+});
+
+app.post("/api/animals", (req, res) => {
+  // set id based on what the next index of the array will be.
+  req.body.id = animals.length.toString();
+  // add animal to json file and animals array in this function.
+  const animal = createNewAnimal(req.body, animals);
+
+  res.json(animal);
 });
 
 // method to make our server listen.
